@@ -16,3 +16,13 @@ export function fileCase(str) {
 export function clone (object) {
   return JSON.parse(JSON.stringify(object));
 }
+
+export function indexInParent(node) {
+    var children = node.parentNode.childNodes;
+    var num = 0;
+    for (var i=0; i<children.length; i++) {
+         if (children[i]==node) return num;
+         if (children[i].nodeType==1) num++;
+    }
+    return -1;
+}
