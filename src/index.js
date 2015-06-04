@@ -237,5 +237,3 @@ export default class CustomSelect {
   }
 
 };
-
-new CustomSelect('select');

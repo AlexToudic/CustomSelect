@@ -494,8 +494,6 @@ var CustomSelect = (function () {
 
 module.exports = CustomSelect;
 
-new CustomSelect("select");
-
 },{"./utils.js":3,"classlist-shim":1}],3:[function(require,module,exports){
 "use strict";
 
