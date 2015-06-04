@@ -1,0 +1,55 @@
+  {
+  "name": "CustomSelect",
+  "version": "1.0.0",
+  "description": "A JavaScript plugin which allow to customize select tags",
+  "main": "index.js",
+  "scripts": {
+    "install": "napa",
+    "test": "browserify -t babelify test/index.js | testling",
+    "test-browser": "beefy -t babelify src/index.js:build.js --debug=false",
+    "build": "browserify -t babelify src/index.js -o build/CustomSelect.js && uglify -s build/CustomSelect.js -o build/CustomSelect.min.js",
+    "prepublish": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AlexToudic/CustomSelect.git"
+  },
+  "keywords": [
+    "select",
+    "css"
+  ],
+  "author": "Alexandre Toudic @Alex_Toudic",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/AlexToudic/CustomSelect/issues"
+  },
+  "homepage": "https://github.com/AlexToudic/CustomSelect",
+  "testling": {
+    "files": "test/index.js",
+    "browsers": [
+      "ie/8..latest",
+      "chrome/22..latest",
+      "firefox/16..latest",
+      "safari/latest",
+      "opera/11.0..latest",
+      "iphone/6",
+      "ipad/6",
+      "android-browser/latest"
+    ]
+  },
+  "devDependencies": {
+    "babelify": "^5.0.4",
+    "beefy": "^2.1.3",
+    "browserify": "^9.0.3",
+    "tape": "^3.5.0",
+    "testling": "^1.7.1",
+    "uglify": "^0.1.1",
+    "watch-cli": "^0.2.1"
+  },
+  "napa": {
+    "classlist-shim": "eligrey/classList.js"
+  },
+  "browser": {
+    "classlist-shim": "./node_modules/classlist-shim/classList.js"
+  }
+}
