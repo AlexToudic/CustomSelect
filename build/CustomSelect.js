@@ -1,7 +1,7 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /*
  * classList.js: Cross-browser full element.classList implementation.
- * 2015-03-12
+ * 1.1.20150312
  *
  * By Eli Grey, http://eligrey.com
  * License: Dedicated to the public domain.
@@ -252,7 +252,9 @@ require("classlist-shim");
 var Utils = _interopRequireWildcard(require("./utils.js"));
 
 var CustomSelect = (function () {
-  function CustomSelect(elements, options) {
+  function CustomSelect(elements) {
+    var options = arguments[1] === undefined ? {} : arguments[1];
+
     _classCallCheck(this, CustomSelect);
 
     if (typeof elements === "string") elements = document.querySelectorAll(elements);else if (typeof elements !== "array") elements = [elements];
@@ -274,7 +276,7 @@ var CustomSelect = (function () {
 
     for (var i = this.elements.length - 1; i >= 0; --i) {
       this.replaceDOMelement(this.elements[i]);
-    }
+    }document.querySelector("html").addEventListener("click", this.blurFocus.bind(this));
   }
 
   _createClass(CustomSelect, {
@@ -303,9 +305,9 @@ var CustomSelect = (function () {
         }
 
         var select = document.createElement("div");
-        select.setAttribute("id", scopeSettings.customID);
+        if (scopeSettings.customID) select.setAttribute("id", scopeSettings.customID);
         select.classList.add("cs-select");
-        select.classList.add(scopeSettings.customClass);
+        if (scopeSettings.customClass) select.classList.add(scopeSettings.customClass);
 
         if (element.disabled) select.classList.add("disabled");
 
@@ -326,12 +328,12 @@ var CustomSelect = (function () {
         var labelTxt = document.createElement("span");
         labelTxt.innerText = scopeSettings.placeholder;
         label.appendChild(labelTxt);
-        element.appendChild(label);
+        select.appendChild(label);
 
         select.appendChild(element);
 
-        select.addEventListener("click, focusin", function (event) {
-          _this.takeFocus(event, select);
+        select.addEventListener("click", function (event) {
+          _this.triggerSelect(event, select);
         });
       }
     },
@@ -340,9 +342,10 @@ var CustomSelect = (function () {
         for (var i = 0, len = options.length; i < len; ++i) {
           var item = options[i];
 
+          var option = document.createElement("li");
+          option.classList.add("cs-option");
+
           if (item.tagName === "OPTION") {
-            var option = document.createElement("li");
-            option.classList.add("cs-option");
             option.setAttribute("data-value", item.value);
             option.innerText = item.innerText;
 
@@ -352,8 +355,6 @@ var CustomSelect = (function () {
 
             list.appendChild(option);
           } else {
-            var option = document.createElement("li");
-            option.classList.add("cs-option");
             option.classList.add("cs-optgroup");
             option.innerText = item.innerText;
 
@@ -366,21 +367,124 @@ var CustomSelect = (function () {
 
             this.populateList(optgroup, item.children);
           }
+
+          option.addEventListener("click", this.optionClick.bind(this));
+          option.addEventListener("mousemove", this.optionHover);
         }
       }
     },
-    takeFocus: {
-      value: function takeFocus(event, select) {
-        event.preventDefault();
+    destroy: {
+      value: function destroy(elem) {
+        var _this = this;
 
-        if (!select.classList.contains("disabled")) select.classList.add("focus");
+        var destroyElements = elem ? [elem] : this.elements;
+
+        Array.prototype.forEach.call(destroyElements, function (select) {
+
+          select.removeEventListener("click", _this.takeFocus);
+
+          var options = select.querySelectorAll("li.cs-option");
+
+          Array.prototype.forEach.call(options, function (option) {
+            option.removeEventListener("click", _this.optionClick);
+            option.removeEventListener("mousemove", _this.optionHover);
+          });
+        });
+
+        if (!elem) {
+          document.querySelector("html").removeEventListener("click", this.blurFocus);
+        } else {
+          this.elements.splice(this.elements.indexOf(elem), 1);
+        }
       }
     },
     blurFocus: {
-      value: function blurFocus(event, select) {
+      value: function blurFocus(event) {
+        if (event) event.preventDefault();
+
+        Array.prototype.forEach.call(this.elements, function (el) {
+          var parent = el.parentNode;
+
+          var bounding = parent.getBoundingClientRect();
+
+          if (parent.classList.contains("open")) {
+            if (event.clientX < bounding.left || event.clientX > bounding.left + bounding.width || (event.clientY < bounding.top || event.clientY > bounding.top + bounding.height)) {
+              parent.classList.remove("open");
+            }
+          }
+        });
+      }
+    },
+    triggerSelect: {
+      value: function triggerSelect(event, select) {
         event.preventDefault();
 
-        select.classList.remove("focus");
+        if (!select.classList.contains("disabled")) {
+          this.checkViewport(select);
+          select.classList.add("open");
+        }
+      }
+    },
+    optionHover: {
+      value: function optionHover(event) {
+        var option = event.currentTarget;
+        var list = option.parentNode;
+        var options = list.querySelectorAll("li.cs-option");
+
+        if (!option.classList.contains("disabled") || option.classList.contains("cs-optgroup")) {
+
+          Array.prototype.forEach.call(options, function (el) {
+            el.classList.remove("active");
+          });
+
+          option.classList.add("active");
+        }
+      }
+    },
+    optionClick: {
+      value: function optionClick(event) {
+        event.stopPropagation();
+
+        var option = event.currentTarget;
+        var select = option.parentNode.parentNode.parentNode;
+        var options = select.querySelectorAll("li.cs-option");
+        var index = Utils.indexInParent(option);
+
+        if (!option.classList.contains("disabled") || option.classList.contains("cs-optgroup")) {
+
+          select.querySelector(".cs-option.selected").classList.remove("selected");
+          option.classList.add("selected");
+
+          var realSelect = select.querySelector("select");
+
+          var realOptions = realSelect.querySelectorAll("option");
+
+          Array.prototype.forEach.call(realOptions, function (el) {
+            el.selected = false;
+          });
+
+          realOptions[index].selected = true;
+
+          select.querySelector(".cs-label").innerText = option.innerText;
+
+          var event = document.createEvent("HTMLEvents");
+          event.initEvent("change", true, false);
+          realSelect.dispatchEvent(event);
+        }
+
+        select.classList.remove("open");
+      }
+    },
+    checkViewport: {
+      value: function checkViewport(select) {
+        var bounding = select.getBoundingClientRect();
+        var listHeight = select.querySelector(".cs-list").offsetHeight;
+
+        if (bounding.bottom + listHeight + 10 > window.innerHeight && bounding.top - listHeight > 10) {
+          select.classList.add("above");
+        } else {
+          select.classList.remove("above");
+        }
       }
     }
   });
@@ -396,6 +500,7 @@ module.exports = CustomSelect;
 exports.defaultify = defaultify;
 exports.fileCase = fileCase;
 exports.clone = clone;
+exports.indexInParent = indexInParent;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -416,6 +521,17 @@ function fileCase(str) {
 
 function clone(object) {
   return JSON.parse(JSON.stringify(object));
+}
+
+function indexInParent(node) {
+  var children = node.parentNode.childNodes;
+  var num = 0;
+  for (var i = 0; i < children.length; i++) {
+    if (children[i] == node) {
+      return num;
+    }if (children[i].nodeType == 1) num++;
+  }
+  return -1;
 }
 
 },{}]},{},[2]);
