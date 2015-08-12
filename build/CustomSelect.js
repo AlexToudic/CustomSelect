@@ -257,7 +257,7 @@ var CustomSelect = (function () {
 
     _classCallCheck(this, CustomSelect);
 
-    if (typeof elements === "string") elements = document.querySelectorAll(elements);else if (typeof elements !== "array") elements = [elements];
+    if (typeof elements === "string") elements = Array.prototype.slice.call(document.querySelectorAll(elements));else if (typeof elements !== "array") elements = [elements];
 
     this.elements = elements;
 
@@ -276,7 +276,8 @@ var CustomSelect = (function () {
 
     for (var i = this.elements.length - 1; i >= 0; --i) {
       this.replaceDOMelement(this.elements[i]);
-    }document.querySelector("html").addEventListener("click", this.blurFocus.bind(this));
+    }this.blurCallback = this.blurFocus.bind(this);
+    document.querySelector("html").addEventListener("click", this.blurCallback);
   }
 
   _createClass(CustomSelect, {
@@ -286,8 +287,9 @@ var CustomSelect = (function () {
 
         var scopeSettings = Utils.clone(this.settings);
 
-        var keys = Object.keys(this.settings);
-        for (var i = keys.length - 1; i >= 0; --i) {
+        var keys = Object.keys(this.settings),
+            i = keys.length;
+        while (i--) {
           var key = keys[i],
               data = element.getAttribute("data-" + Utils.fileCase(key));
 
@@ -332,9 +334,30 @@ var CustomSelect = (function () {
 
         select.appendChild(element);
 
-        select.addEventListener("click", function (event) {
+        select.focusCallback = function (event) {
           _this.triggerSelect(event, select);
-        });
+        };
+        select.addEventListener("click", select.focusCallback);
+      }
+    },
+    update: {
+      value: function update() {
+        if (!this.elements) {
+          return;
+        }var i = this.elements.length,
+            elem = undefined;
+        while (i--) {
+          elem = this.elements[i];
+
+          this.destroy(elem);
+
+          var wrapper = elem.parentNode,
+              _parent = wrapper.parentNode;
+          _parent.insertBefore(elem, wrapper);
+          _parent.removeChild(wrapper);
+
+          this.replaceDOMelement(elem);
+        }
       }
     },
     populateList: {
@@ -368,31 +391,39 @@ var CustomSelect = (function () {
             this.populateList(optgroup, item.children);
           }
 
-          option.addEventListener("click", this.optionClick.bind(this));
-          option.addEventListener("mousemove", this.optionHover);
+          option.clickCallback = this.optionClick.bind(this);
+          option.addEventListener("click", option.clickCallback);
+
+          option.overCallback = this.optionHover;
+          option.addEventListener("mousemove", option.overCallback);
         }
       }
     },
     destroy: {
       value: function destroy(elem) {
-        var _this = this;
-
         var destroyElements = elem ? [elem] : this.elements;
 
-        Array.prototype.forEach.call(destroyElements, function (select) {
+        var i = destroyElements.length,
+            select = undefined;
+        while (i--) {
+          select = destroyElements[i];
 
-          select.removeEventListener("click", _this.takeFocus);
+          select.removeEventListener("click", select.focusCallback);
 
           var options = select.querySelectorAll("li.cs-option");
 
-          Array.prototype.forEach.call(options, function (option) {
-            option.removeEventListener("click", _this.optionClick);
-            option.removeEventListener("mousemove", _this.optionHover);
-          });
-        });
+          var j = options.length,
+              option = undefined;
+          while (j--) {
+            option = options[j];
+
+            option.removeEventListener("click", option.clickCallback);
+            option.removeEventListener("mousemove", option.overCallback);
+          }
+        }
 
         if (!elem) {
-          document.querySelector("html").removeEventListener("click", this.blurFocus);
+          document.querySelector("html").removeEventListener("click", this.blurCallback);
         } else {
           this.elements.splice(this.elements.indexOf(elem), 1);
         }
@@ -400,19 +431,22 @@ var CustomSelect = (function () {
     },
     blurFocus: {
       value: function blurFocus(event) {
-        if (event) event.preventDefault();
 
-        Array.prototype.forEach.call(this.elements, function (el) {
-          var parent = el.parentNode;
-
-          var bounding = parent.getBoundingClientRect();
+        var i = this.elements.length,
+            el = undefined,
+            parent = undefined,
+            bounding = undefined;
+        while (--i) {
+          el = this.elements[i];
+          parent = el.parentNode;
+          bounding = parent.getBoundingClientRect();
 
           if (parent.classList.contains("open")) {
             if (event.clientX < bounding.left || event.clientX > bounding.left + bounding.width || (event.clientY < bounding.top || event.clientY > bounding.top + bounding.height)) {
               parent.classList.remove("open");
             }
           }
-        });
+        }
       }
     },
     triggerSelect: {
@@ -433,9 +467,10 @@ var CustomSelect = (function () {
 
         if (!option.classList.contains("disabled") || option.classList.contains("cs-optgroup")) {
 
-          Array.prototype.forEach.call(options, function (el) {
-            el.classList.remove("active");
-          });
+          var i = options.length;
+          while (i--) {
+            options[i].classList.remove("active");
+          }
 
           option.classList.add("active");
         }
@@ -459,9 +494,10 @@ var CustomSelect = (function () {
 
           var realOptions = realSelect.querySelectorAll("option");
 
-          Array.prototype.forEach.call(realOptions, function (el) {
-            el.selected = false;
-          });
+          var i = realOptions.length;
+          while (i--) {
+            realOptions[i].selected = false;
+          }
 
           realOptions[index].selected = true;
 
