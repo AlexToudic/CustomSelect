@@ -1,5 +1,5 @@
   {
-  "name": "CustomSelect",
+  "name": "customselect",
   "version": "1.0.0",
   "description": "A JavaScript plugin which allow to customize select tags",
   "main": "build/CustomSelect.min.js",
