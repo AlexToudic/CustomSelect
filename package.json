@@ -2,12 +2,11 @@
   "name": "customselect",
   "version": "1.0.0",
   "description": "A JavaScript plugin which allow to customize select tags",
-  "main": "build/CustomSelect.min.js",
+  "main": "src/index.js",
   "scripts": {
     "install": "napa",
     "test": "browserify -t babelify test/index.js | testling",
     "test-browser": "beefy -t babelify src/index.js:build.js --debug=false",
-    "build": "browserify -t babelify src/index.js -o build/CustomSelect.js && uglify -s build/CustomSelect.js -o build/CustomSelect.min.js",
     "prepublish": "npm run build"
   },
   "repository": {
