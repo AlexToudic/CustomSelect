@@ -5,7 +5,7 @@ export default class CustomSelect {
   constructor (elements, options = {}) {
 
     if (typeof elements === 'string')
-      elements = document.querySelectorAll(elements);
+      elements = Array.prototype.slice.call(document.querySelectorAll(elements));
     else if (typeof elements !== 'array')
       elements = [elements];
 
@@ -27,14 +27,15 @@ export default class CustomSelect {
     for (let i = this.elements.length-1; i >= 0; --i)
       this.replaceDOMelement(this.elements[i]);
 
-    document.querySelector('html').addEventListener('click', this.blurFocus.bind(this));
+    this.blurCallback = this.blurFocus.bind(this);
+    document.querySelector('html').addEventListener('click', this.blurCallback);
   }
 
   replaceDOMelement (element) {
     let scopeSettings = Utils.clone(this.settings);
 
-    let keys = Object.keys(this.settings);
-    for (let i = keys.length-1; i >= 0; --i) {
+    let keys = Object.keys(this.settings), i = keys.length;
+    while (i--) {
       let key = keys[i],
           data = element.getAttribute(`data-${ Utils.fileCase(key) }`);
 
@@ -43,7 +44,7 @@ export default class CustomSelect {
     }
 
     let options = element.children;
-    
+
     if (!scopeSettings.placeholder) {
       let first = options[0];
 
@@ -83,9 +84,27 @@ export default class CustomSelect {
 
     select.appendChild(element);
 
-    select.addEventListener('click', (event) => {
+    select.focusCallback = (event) => {
       this.triggerSelect(event, select);
-    });
+    };
+    select.addEventListener('click', select.focusCallback);
+  }
+
+  update() {
+    if (!this.elements) return;
+
+    let i = this.elements.length, elem;
+    while (i--) {
+      elem = this.elements[i];
+
+      this.destroy(elem);
+
+      let wrapper = elem.parentNode, parent = wrapper.parentNode;
+      parent.insertBefore(elem, wrapper);
+      parent.removeChild(wrapper);
+
+      this.replaceDOMelement(elem);
+    }
   }
 
   populateList (list, options) {
@@ -121,29 +140,36 @@ export default class CustomSelect {
         this.populateList(optgroup, item.children);
       }
 
-      option.addEventListener('click', this.optionClick.bind(this));
-      option.addEventListener('mousemove', this.optionHover);
+      option.clickCallback = this.optionClick.bind(this);
+      option.addEventListener('click', option.clickCallback);
+
+      option.overCallback = this.optionHover;
+      option.addEventListener('mousemove', option.overCallback);
     }
   }
 
   destroy(elem){
     let destroyElements = (elem) ? [elem] : this.elements;
 
-    Array.prototype.forEach.call(destroyElements, (select) => {
+    let i = destroyElements.length, select;
+    while (i--) {
+      select = destroyElements[i];
 
-      select.removeEventListener('click', this.takeFocus);
+      select.removeEventListener('click', select.focusCallback);
 
       let options = select.querySelectorAll('li.cs-option')
 
-      Array.prototype.forEach.call(options, (option) => {
-        option.removeEventListener('click', this.optionClick);
-        option.removeEventListener('mousemove', this.optionHover);
-      });
+      let j = options.length, option;
+      while (j--) {
+        option = options[j];
 
-    });
+        option.removeEventListener('click', option.clickCallback);
+        option.removeEventListener('mousemove', option.overCallback);
+      }
+    }
 
     if(!elem){
-      document.querySelector('html').removeEventListener('click', this.blurFocus);
+      document.querySelector('html').removeEventListener('click', this.blurCallback);
     }
     else {
       this.elements.splice(this.elements.indexOf(elem), 1);
@@ -151,20 +177,19 @@ export default class CustomSelect {
   }
 
   blurFocus(event) {
-    if(event) event.preventDefault();
 
-    Array.prototype.forEach.call(this.elements, (el) => {
-      let parent = el.parentNode;
-
-      let bounding = parent.getBoundingClientRect();
+    let i = this.elements.length, el, parent, bounding;
+    while (--i) {
+      el = this.elements[i];
+      parent = el.parentNode;
+      bounding = parent.getBoundingClientRect();
 
       if(parent.classList.contains('open')){
         if((event.clientX < bounding.left || event.clientX > (bounding.left + bounding.width)) || (event.clientY < bounding.top || event.clientY > (bounding.top + bounding.height)) ){
           parent.classList.remove('open');
         }
       }
-
-    });
+    }
   }
 
   triggerSelect(event, select){
@@ -183,9 +208,10 @@ export default class CustomSelect {
 
     if(!option.classList.contains('disabled') || option.classList.contains('cs-optgroup')){
 
-      Array.prototype.forEach.call(options, (el) => {
-        el.classList.remove('active');
-      });
+      let i = options.length;
+      while (i--) {
+        options[i].classList.remove('active');
+      }
 
       option.classList.add('active');
     }
@@ -208,9 +234,10 @@ export default class CustomSelect {
 
       let realOptions = realSelect.querySelectorAll('option');
 
-      Array.prototype.forEach.call(realOptions, (el) => {
-        el.selected = false;
-      });
+      let i = realOptions.length;
+      while(i--) {
+        realOptions[i].selected = false;
+      }
 
       realOptions[index].selected = true;
 
