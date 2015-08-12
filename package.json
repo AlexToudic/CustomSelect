@@ -49,5 +49,10 @@
   },
   "browser": {
     "classlist-shim": "./node_modules/classlist-shim/classList.js"
+  },
+  "browserify": {
+    "transform": [
+      "babelify"
+    ]
   }
 }
