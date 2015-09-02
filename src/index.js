@@ -6,7 +6,7 @@ export default class CustomSelect {
 
     if (typeof elements === 'string')
       elements = Array.prototype.slice.call(document.querySelectorAll(elements));
-    else if (typeof elements !== 'array')
+    else if (!elements.length)
       elements = [elements];
 
     this.elements = elements;
