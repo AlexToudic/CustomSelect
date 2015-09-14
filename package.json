@@ -1,6 +1,6 @@
   {
   "name": "customselect",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A JavaScript plugin which allow to customize select tags",
   "main": "src/index.js",
   "scripts": {

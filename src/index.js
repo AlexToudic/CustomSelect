@@ -51,7 +51,7 @@ export default class CustomSelect {
       if (first.tagName === 'OPTGROUP')
         first = first.children[0]
 
-      scopeSettings.placeholder = first.innerText;
+      scopeSettings.placeholder = first.textContent;
     }
 
     let select = document.createElement('div');
@@ -77,7 +77,7 @@ export default class CustomSelect {
     let label = document.createElement('div');
     label.classList.add('cs-label');
     let labelTxt = document.createElement('span');
-    labelTxt.innerText = scopeSettings.placeholder;
+    labelTxt.textContent = scopeSettings.placeholder;
     label.appendChild(labelTxt);
     select.appendChild(label);
 
@@ -116,7 +116,7 @@ export default class CustomSelect {
 
       if (item.tagName === 'OPTION') {
         option.setAttribute('data-value', item.value);
-        option.innerText = item.innerText;
+        option.textContent = item.textContent;
 
         if (item.disabled)
           option.classList.add('disabled');
@@ -128,7 +128,7 @@ export default class CustomSelect {
       }
       else {
         option.classList.add('cs-optgroup');
-        option.innerText = item.innerText;
+        option.textContent = item.textContent;
 
         list.appendChild(option);
 
@@ -241,7 +241,7 @@ export default class CustomSelect {
 
       realOptions[index].selected = true;
 
-      select.querySelector('.cs-label').innerText = option.innerText;
+      select.querySelector('.cs-label').textContent = option.textContent;
 
       var event = document.createEvent('HTMLEvents');
       event.initEvent('change', true, false);
